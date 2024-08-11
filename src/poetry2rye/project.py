@@ -1,8 +1,7 @@
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
 
 import pyproject_parser
 import slugify
@@ -27,10 +26,6 @@ def poetry_canonicalize_name(project_name: str) -> str:
 
 def rye_canonicalize_name(project_name: str) -> str:
     return slugify.slugify(project_name)
-
-
-def rye_module_name(project_name: str) -> str:
-    return rye_canonicalize_name(project_name).replace("-", "_")
 
 
 @dataclass
@@ -87,13 +82,13 @@ class PoetryProject:
     def __init__(self, project_path: Path) -> None:
         self.path = project_path
         self.project_name = rye_canonicalize_name(self.path.name)
-        self.module_name = rye_module_name(self.path.name)
 
         if not (self.path / "pyproject.toml").exists():
             raise ControlledError("pyproject.toml not found")
 
         self.pyproject = pyproject_parser.PyProject.load(self.path / "pyproject.toml")
         self.poetry = self.pyproject.tool["poetry"]
+        self.module_name = self.poetry["name"].replace("-", "_")
 
         if self.pyproject.project is not None:
             raise ControlledError(
